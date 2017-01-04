@@ -11,24 +11,24 @@ import static java.lang.Math.abs;
  *
  * @author Gamon
  */
-public class King extends Piece {
+public class Knight extends Piece {
 
-    public King(Color team, int let, int num) {
-        super(team, let, num, 'K', true);
+    public Knight(Color team, int let, int num) {
+        super(team, let, num, 'H', true);
     }
 
     @Override
     public Piece canMoveTo(int let, int num, Board board) {
-        if (abs(let - getLet()) < 2 && abs(num - getNum()) < 2 &&
-            !(let == getLet() && num == getNum()) && 
-            isNotOnTeamOf(board.getPiece(let, num)))
-            {
-                board.getPiece(let, num).setNextAliveFalse();
-                setNextCoordinates(let, num);
-                
-                return board.getPiece(let, num);
-            }
-
+        if (
+            (
+            (abs(let - getLet()) == 2 && abs(num - getNum()) == 1) ||
+            (abs(let - getLet()) == 1 && abs(num - getNum()) == 2)
+            ) &&
+            isNotOnTeamOf(board.getPiece(let, num))
+        )
+        {
+            return board.getPiece(let, num);
+        }
         return null;
     }
 

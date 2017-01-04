@@ -28,9 +28,7 @@ public class Pawn extends Piece {
     @Override
     //only updates NEXT values and does the myKingInCheck function
     //if it passes the myKingInCheck function, then set CURR values to NEXT values
-    public boolean canMoveTo(int let, int num, Board board) {
-        int targetNum = num; //moving undoNextValues to the bottom for the target piece, need to know its y-value
-        
+    public Piece canMoveTo(int let, int num, Board board) {        
         if (
             (let == getLet()+1 || let == getLet() - 1) &&
             (
@@ -49,33 +47,21 @@ public class Pawn extends Piece {
             if (board.getPiece(let, num).isVulnerableToEnPassant(board.getTurn()) &&
                 isEnemyOf(board.getPiece(let, getNum())))
             {
-                targetNum = getNum();
                 nextFirstMove = false;
                 board.getPiece(let, getNum()).setNextAliveFalse();
                 setNextCoordinates(let, num);
                 
-                if(!board.movedIntoCheck())
-                {
-                    confirmCurrValues();
-                    board.getPiece(let, getNum()).confirmCurrValues();
-                    return true;
-                }
+                return board.getPiece(let, getNum());
             }
             
             //capture enemy at destination:
             if (isEnemyOf(board.getPiece(let, num)))
             {
-                targetNum = num;
                 nextFirstMove = false;
                 board.getPiece(let, num).setNextAliveFalse();
                 setNextCoordinates(let, num);
                 
-                if(!board.movedIntoCheck())
-                {
-                    confirmCurrValues();
-                    board.getPiece(let, num).confirmCurrValues();
-                    return true;
-                }
+                return board.getPiece(let, num);
             }
         }
         
@@ -91,11 +77,7 @@ public class Pawn extends Piece {
             nextFirstMove = false;
             setNextCoordinates(let, num);
 
-            if(!board.movedIntoCheck())
-            {
-                confirmCurrValues();
-                return true;
-            }
+            return board.getPiece(let, num);
         }
         
         //double jump over a vacant space to a vacant space on the first move:
@@ -117,15 +99,10 @@ public class Pawn extends Piece {
             nextTurnDoubleJumpedOn = board.getTurn();
             setNextCoordinates(let, num);
 
-            if(!board.movedIntoCheck())
-            {
-                confirmCurrValues();
-                return true;
-            }
+            return board.getPiece(let, num);
         }
-        board.getPiece(let, targetNum).undoNextValues();
-        undoNextValues();
-        return false;
+
+        return null;
     }
     
     @Override

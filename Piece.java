@@ -10,13 +10,9 @@ package chess;
  * @author Gamon
  */
 public abstract class Piece {
-    private int currLet;
-    private int currNum;
-    private boolean currAlive; //is the piece still on the board?
-    
-    private int nextLet;
-    private int nextNum;
-    private boolean nextAlive; //is the piece still on the board?
+    private int[] currNextLet;
+    private int[] currNextNum;
+    private boolean[] currNextAlive; //is the piece still on the board?
     
     private Color team;
     private char symbol;
@@ -24,35 +20,42 @@ public abstract class Piece {
     
     Piece(Color team, int let, int num, char symbol, boolean isAlive)
     {
-        this.currLet = let;
-        this.currNum = num;
-        this.currAlive = isAlive;
+        currNextLet = new int[2];
+        currNextNum = new int[2];
+        currNextAlive = new boolean[2];
         
-        this.nextLet = let;
-        this.nextNum = num;
-        this.nextAlive = isAlive;
+        //initialize the current values:
+        currNextLet[0] = let;
+        currNextNum[0] = num;
+        currNextAlive[0]= isAlive;
+        
+        //initialize the next possible values:
+        currNextLet[1] = let;
+        currNextNum[1] = num;
+        currNextAlive[1]= isAlive;
         
         this.team = team;
         this.symbol = symbol;
         
     }
-    
-    public abstract boolean canMoveTo(int let, int num, Board board);
+    //return piece that the moving piece affected (vacant spot at destination, 
+    //captured piece-including en passant, or rook during castling):
+    public abstract Piece canMoveTo(int let, int num, Board board); 
     public abstract void confirmCurrValues(); //confirm move
     public abstract void undoNextValues(); //undo move
     
     public void confirmCurrBaseValues()
     {
-        currLet = nextLet;
-        currNum = nextNum;
-        currAlive = nextAlive;
+        currNextLet[0] = currNextLet[1];
+        currNextNum[0] = currNextNum[1];
+        currNextAlive[0] = currNextAlive[1];
     }
     
     public void undoNextBaseValues()
     {
-        nextLet = currLet;
-        nextNum = currNum;
-        nextAlive = currAlive;
+        currNextLet[1] = currNextLet[0];
+        currNextNum[1] = currNextNum[0];
+        currNextAlive[1] = currNextAlive[0];
     }
     
     public void display()

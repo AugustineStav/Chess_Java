@@ -16,8 +16,8 @@ public class Vacant extends Piece {
     }
 
     @Override
-    public boolean canMoveTo(int let, int num, Board board) {
-        return false;
+    public Piece canMoveTo(int let, int num, Board board) {
+        return null;
     }
 
     @Override

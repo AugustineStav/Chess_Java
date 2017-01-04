@@ -17,7 +17,7 @@ public class Board {
     
     Board()
     {
-        int turnCounter = 1;
+        turnCounter = 1;
         teams = new Piece[2][24]; //16 pieces on each team plus 8 possible queens
         game = new Piece[9][9]; //8 by 8 game board, indexing from 1 to 8
         vacant = new Vacant();
@@ -30,27 +30,46 @@ public class Board {
             }
         }
         
-        teams[Color.BLACK.getValue()][8] = new Pawn(Color.BLACK, 1, 7);
-        teams[Color.WHITE.getValue()][8] = new Pawn(Color.WHITE, 1, 2);
-        teams[Color.BLACK.getValue()][9] = new Pawn(Color.BLACK, 2, 7);
-        teams[Color.WHITE.getValue()][9] = new Pawn(Color.WHITE, 2, 2);
-        teams[Color.BLACK.getValue()][10] = new Pawn(Color.BLACK, 3, 7);
-        teams[Color.WHITE.getValue()][10] = new Pawn(Color.WHITE, 3, 2);
-        teams[Color.BLACK.getValue()][11] = new Pawn(Color.BLACK, 4, 7);
-        teams[Color.WHITE.getValue()][11] = new Pawn(Color.WHITE, 4, 2);
-        teams[Color.BLACK.getValue()][12] = new Pawn(Color.BLACK, 5, 7);
-        teams[Color.WHITE.getValue()][12] = new Pawn(Color.WHITE, 5, 2);
-        teams[Color.BLACK.getValue()][13] = new Pawn(Color.BLACK, 6, 7);
-        teams[Color.WHITE.getValue()][13] = new Pawn(Color.WHITE, 6, 2);
-        teams[Color.BLACK.getValue()][14] = new Pawn(Color.BLACK, 7, 7);
-        teams[Color.WHITE.getValue()][14] = new Pawn(Color.WHITE, 7, 2);
-        teams[Color.BLACK.getValue()][15] = new Pawn(Color.BLACK, 8, 7);
-        teams[Color.WHITE.getValue()][15] = new Pawn(Color.WHITE, 8, 2);
-        
-        teams[Color.BLACK.getValue()][0] = new King(Color.BLACK, 5, 8);
-        teams[Color.WHITE.getValue()][0] = new King(Color.WHITE, 5, 1);
+        //instantiate each team's pieces and place them on the board
+        makeTeam(Color.BLACK);
+	makeTeam(Color.WHITE);
         
         updateBoard();
+    }
+    
+    //final so that it cannot be modified in a derived class (helper function used in constructor):
+    public final void makeTeam(Color team) 
+    {
+        int nonPawnsNum, pawnsNum;
+	if (team == Color.BLACK)
+	{
+		nonPawnsNum = 8;
+		pawnsNum = 7;
+	}
+	else
+	{
+		nonPawnsNum = 1;
+		pawnsNum = 2;
+	}
+        
+        //King, Queen, Bishop_left, Bishop_right, Knight_left, Knight_right, Rook_left, Rook_right, Pawn*8(left to right):
+        teams[team.getValue()][0] = new King(team, 5, nonPawnsNum);
+        teams[team.getValue()][1] = new Queen(team, 4, nonPawnsNum);
+        teams[team.getValue()][2] = new Bishop(team, 3, nonPawnsNum);
+        teams[team.getValue()][3] = new Bishop(team, 6, nonPawnsNum);
+        teams[team.getValue()][4] = new Knight(team, 2, nonPawnsNum);
+        teams[team.getValue()][5] = new Knight(team, 7, nonPawnsNum);
+        teams[team.getValue()][6] = new Rook(team, 1, nonPawnsNum);
+        teams[team.getValue()][7] = new Rook(team, 8, nonPawnsNum);
+        
+        teams[team.getValue()][8] = new Pawn(team, 1, pawnsNum);
+        teams[team.getValue()][9] = new Pawn(team, 2, pawnsNum);
+        teams[team.getValue()][10] = new Pawn(team, 3, pawnsNum);
+        teams[team.getValue()][11] = new Pawn(team, 4, pawnsNum);
+        teams[team.getValue()][12] = new Pawn(team, 5, pawnsNum);
+        teams[team.getValue()][13] = new Pawn(team, 6, pawnsNum);
+        teams[team.getValue()][14] = new Pawn(team, 7, pawnsNum);
+        teams[team.getValue()][15] = new Pawn(team, 8, pawnsNum);
     }
     
     public final void updateBoard()
@@ -119,8 +138,33 @@ public class Board {
         return turnCounter;
     }
     
-    public boolean movedIntoCheck() //TESTING, NEED TO UPDATE WITH LIST THAT CHECKS MOVING NEXT VALUES TO KING'S NEXT
+    //current boolean flag means "check the CURRENT" positions
+    //otherwise, check the NEXT (potential) positions
+    public boolean movedIntoCheck(Color team, boolean current) //TESTING, NEED TO UPDATE WITH LIST THAT CHECKS MOVING NEXT VALUES TO KING'S NEXT
     {
         return false;
+    }
+    
+    boolean movePieceFromTo(Color team, int startLet, int startNum, int let, int num) {
+        Piece mover = getPiece(startLet, startNum);
+        Piece target = getPiece(startLet, startNum).canMoveTo(let, num, this);
+        
+        if (target != null)
+        {
+            if (!movedIntoCheck(team, false)) //investigate the NEXT values for check
+            {
+                mover.confirmCurrValues();
+                target.confirmCurrValues();
+                return true;
+            }
+            target.undoNextValues();
+        }
+        mover.undoNextValues();
+        return false;
+    }
+    
+    public void incrementTurn()
+    {
+        turnCounter++;
     }
 }
