@@ -5,7 +5,7 @@
  */
 package chess;
 
-import java.io.IOException;
+import java.util.Arrays;
 import java.util.Scanner;
 
 /**
@@ -17,29 +17,73 @@ public class Board {
     private Piece[][] game;
     private int turnCounter;
     private Vacant vacant;
+    private int whiteRepetitions; //number of times white team has repeated the current board position
+    private int blackRepetitions;
     
     Board()
     {
-        turnCounter = 1;
-        teams = new Piece[2][24]; //16 pieces on each team plus 8 possible queens
-        game = new Piece[9][9]; //8 by 8 game board, indexing from 1 to 8
-        vacant = new Vacant();
+        this.whiteRepetitions = 0;
+        this.blackRepetitions = 0;
+        this.turnCounter = 1;
+        initializeEmptyBoardAndTeam();
+        
+        //instantiate each team's pieces:
+        makeTeam(Color.BLACK);
+	makeTeam(Color.WHITE);
+        
+        //place pieces on the board (lookup matrix):
+        updateBoard();
+    }
+
+    Board(Board otherBoard)
+    {
+        this.whiteRepetitions = otherBoard.whiteRepetitions;
+        this.blackRepetitions = otherBoard.whiteRepetitions;
+        this.turnCounter = otherBoard.turnCounter;
+        initializeEmptyBoardAndTeam();
+        
+        //copy each piece on the otherBoard to teams;
+        for (int i = 0; i < 48; i++)
+        {
+            this.teams[Color.BLACK.getValue()][i] = otherBoard.teams[Color.BLACK.getValue()][i].copy();
+            this.teams[Color.WHITE.getValue()][i] = otherBoard.teams[Color.WHITE.getValue()][i].copy();
+        }
+        
+        updateBoard();
+    }
+    
+    private void initializeEmptyBoardAndTeam() {
+        this.teams = new Piece[2][48]; //16 pieces on each team plus 32 possible pawn promotions
+        this.game = new Piece[9][9]; //8 by 8 game board, indexing from 1 to 8
+        this.vacant = new Vacant();
         
         for (int teamNum = 0; teamNum < 2; teamNum++)
         {
-            for (int pieceNum = 0; pieceNum < 24; pieceNum++)
+            for (int pieceNum = 0; pieceNum < 48; pieceNum++)
             {
-                teams[teamNum][pieceNum] = vacant;
+                this.teams[teamNum][pieceNum] = this.vacant;
             }
         }
-        
-        //instantiate each team's pieces and place them on the board
-        makeTeam(Color.BLACK);
-	makeTeam(Color.WHITE);
-        //makeTeamTest(Color.BLACK);
-	//makeTeamTest(Color.WHITE);
-        
-        updateBoard();
+    }
+    
+    public Board copy()
+    {
+        return new Board(this);
+    }
+    
+    public boolean isEqualTo(Board otherBoard)
+    {
+        for (int let = 1; let <= 8; let++)
+        {
+            for (int num = 1; num <= 8; num++)
+            {
+                if(!this.game[num][let].isEqualTo(otherBoard.game[num][let]))
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
     
     //final so that it cannot be modified in a derived class (helper function used in constructor):
@@ -69,39 +113,67 @@ public class Board {
 
         for (int i = 1; i <= 8; i++)
         {
-            //add the possible promoted queens to the team:
-            Queen queen = new Queen(team, i, pawnsNum, false);
-            //add the pawns to the team:
-            Pawn pawn = new Pawn(team, i, pawnsNum, true, queen);
-            teams[team.getValue()][i + 7] = pawn;
-            teams[team.getValue()][i + 15] = queen;
+            //add the pawns and possible promotions to the team:
+            teams[team.getValue()][i + 7] = new Pawn(team, i, pawnsNum, true);
+            teams[team.getValue()][i + 15] = new Queen(team, i, pawnsNum, false);
+            teams[team.getValue()][i + 23] = new Knight(team, i, pawnsNum, false);
+            teams[team.getValue()][i + 31] = new Rook(team, i, pawnsNum, false);
+            teams[team.getValue()][i + 39] = new Bishop(team, i, pawnsNum, false);
         }
     }
     
     public final void makeTeamTest(Color team) 
-    {       
-        if (team == Color.WHITE)
+    {
+        int nonPawnsNum, pawnsNum;
+	if (team == Color.BLACK)
+	{
+		nonPawnsNum = 8;
+		pawnsNum = 7;
+	}
+	else
+	{
+		nonPawnsNum = 1;
+		pawnsNum = 2;
+	}
+        
+        //King, Queen, Bishop_left, Bishop_right, Knight_left, Knight_right, Rook_left, Rook_right, Pawn*8(left to right):
+        teams[team.getValue()][0] = new King(team, 5, nonPawnsNum, true);
+        teams[team.getValue()][1] = new Queen(team, 4, nonPawnsNum, true);
+        teams[team.getValue()][2] = new Bishop(team, 3, nonPawnsNum, true);
+        teams[team.getValue()][3] = new Bishop(team, 6, nonPawnsNum, true);
+        teams[team.getValue()][4] = new Knight(team, 2, nonPawnsNum, true);
+        teams[team.getValue()][5] = new Knight(team, 7, nonPawnsNum, true);
+        teams[team.getValue()][6] = new Rook(team, 1, nonPawnsNum, true);
+        teams[team.getValue()][7] = new Rook(team, 8, nonPawnsNum, true);
+
+        for (int i = 1; i <= 8; i++)
         {
-            teams[team.getValue()][0] = new King(team, 1, 6, true);
-            teams[team.getValue()][1] = new Pawn(team, 3, 6, true, new Queen(team, 1, 1, false));
-            teams[team.getValue()][2] = new Pawn(team, 8, 5, true, new Queen(team, 2, 1, false));
-            for (int i = 3; i < 24; i++)
-            {
-                teams[team.getValue()][i] = new Queen(team, i, 1, false);
-            }   
+            //add the pawns and possible promotions to the team:
+            teams[team.getValue()][i + 7] = new Pawn(team, i, pawnsNum, true);
+            teams[team.getValue()][i + 15] = new Queen(team, i, pawnsNum, false);
+            teams[team.getValue()][i + 23] = new Knight(team, i, pawnsNum, false);
+            teams[team.getValue()][i + 31] = new Rook(team, i, pawnsNum, false);
+            teams[team.getValue()][i + 39] = new Bishop(team, i, pawnsNum, false);
         }
         
-        if (team == Color.BLACK)
+        for (int i = 1; i <= 8; i++)
         {
-            teams[team.getValue()][0] = new King(team, 6, 5, true);
-            teams[team.getValue()][1] = new Queen(team, 3, 7, true);
-            teams[team.getValue()][2] = new Pawn(team, 7, 7, true, new Queen(team, 1, 8, false));
-            teams[team.getValue()][3] = new Pawn(team, 8, 7, true, new Queen(team, 2, 8, false));
-            teams[team.getValue()][4] = new Rook(team, 4, 5, true);
-            for (int i = 5; i < 24; i++)
+            if (i==1)
             {
-                teams[team.getValue()][i] = new Queen(team, i, 8, false);
-            }   
+                teams[team.getValue()][i + 7] = new Pawn(team, 1, 6, true);
+                teams[team.getValue()][i + 15] = new Queen(team, i, pawnsNum, false);
+                teams[team.getValue()][i + 23] = new Knight(team, i, pawnsNum, false);
+                teams[team.getValue()][i + 31] = new Rook(team, i, pawnsNum, false);;
+                teams[team.getValue()][i + 39] = new Bishop(team, i, pawnsNum, false);
+            }
+            else
+            {
+                teams[team.getValue()][i + 7] = new Pawn(team, i, pawnsNum, true);
+                teams[team.getValue()][i + 15] = new Queen(team, i, pawnsNum, false);
+                teams[team.getValue()][i + 23] = new Knight(team, i, pawnsNum, false);
+                teams[team.getValue()][i + 31] = new Rook(team, i, pawnsNum, false);
+                teams[team.getValue()][i + 39] = new Bishop(team, i, pawnsNum, false);
+            }
         }
     }
     
@@ -116,7 +188,7 @@ public class Board {
         }
         for (int teamNum = 0; teamNum < 2; teamNum++)
         {
-            for (int pieceNum = 0; pieceNum < 24; pieceNum++)
+            for (int pieceNum = 0; pieceNum < 48; pieceNum++)
             {
                 Piece currPiece = teams[teamNum][pieceNum];
                 if (currPiece.isAlive())
@@ -205,12 +277,12 @@ public class Board {
         turnCounter++;
     }
     
-    Piece getEnemyKing(Piece piece)
+    public Piece getEnemyKing(Piece piece)
     {
         return teams[getEnemyTeam(piece.getTeam()).getValue()][0];
     }
     
-    Color getEnemyTeam(Color team)
+    public Color getEnemyTeam(Color team)
     {
         if (team == Color.BLACK)
         {
@@ -223,9 +295,9 @@ public class Board {
         return Color.VACANT;
     }
     
-    private boolean isInCheck(Color team)
+    public boolean isInCheck(Color team)
     {
-        for (int i = 0; i < 24; i++)
+        for (int i = 0; i < 48; i++)
         {
             if(teams[getEnemyTeam(team).getValue()][i].isAlive() &&
                teams[getEnemyTeam(team).getValue()][i].canSeeEnemyKing(this))
@@ -236,175 +308,97 @@ public class Board {
         return false;
     }
     
-    private void move(Scanner input, Color team)
+    private boolean isDraw()
     {
-        boolean moved = false;
-	String startCoord, destinationCoord;
-	int startLet, startNum, let, num;
-
-	if (team == Color.WHITE)
-	{
-		System.out.print("White ");
-	} else
-	{
-		System.out.print("Black ");
-	}
-	System.out.println("team's turn.");
-
-	while (!moved)
-	{
-            if (isInCheck(team)) 
-            {
-                System.out.println("Your king is in check.");
-            }
-
-            System.out.print("Input LETTER NUMBER of piece to move: ");
-            startCoord = input.next();
-            if(Character.toUpperCase(startCoord.charAt(0)) >= 'A' && Character.toUpperCase(startCoord.charAt(0)) <= 'H' &&
-               Character.toUpperCase(startCoord.charAt(1)) >= '1' && Character.toUpperCase(startCoord.charAt(1)) <= '8')
-            {
-                startLet = Character.toUpperCase(startCoord.charAt(0)) - 'A' + 1;
-                startNum = Character.toUpperCase(startCoord.charAt(1)) - '1' + 1;
-            }
-            else 
-            {
-                System.out.println("Invalid starting coordinates. They must be on the board.");
-                continue;
-            }
-            
-            if (!getPiece(startLet, startNum).isOnTeam(team))
-            {
-                System.out.println("Invalid starting position. The piece must be on your team.");
-                continue;
-            }
-            
-            System.out.print("Input LETTER NUMBER of destination: ");
-            destinationCoord = input.next();
-            if(Character.toUpperCase(destinationCoord.charAt(0)) >= 'A' && Character.toUpperCase(destinationCoord.charAt(0)) <= 'H' &&
-               Character.toUpperCase(destinationCoord.charAt(1)) >= '1' && Character.toUpperCase(destinationCoord.charAt(1)) <= '8')
-            {
-                let = Character.toUpperCase(destinationCoord.charAt(0)) - 'A' + 1;
-                num = Character.toUpperCase(destinationCoord.charAt(1)) - '1' + 1;
-            }
-            else 
-            {
-                System.out.println("Invalid destination. It must be on the board.");
-                continue;
-            }
-
-            Piece mover = getPiece(startLet, startNum);
-            Piece target = mover.getTargetAndMoveTo(let, num, this);
-            updateBoard(); //update the game[][] board to be a table pointing to the potential next positions
-
-            if (target != null) //the piece can reach the destination, barring exposing its own team's King to check
-            {
-                if (!isInCheck(team)) //investigate the curr values for check
-                {
-                    mover.confirmCurrValues(); //set prev member variables equal to curr values
-                    target.confirmCurrValues();
-                    moved = true; //successfully moved a piece, can now exit the while loop
-                }
-                else
-                {
-                    System.out.println("Invalid move. You cannot move your own King into check.");
-                    mover.undoNextValues(); //set curr member variables equal to prev values
-                    target.undoNextValues(); //if you moved yourself into check, under the target movement while we are sure it is not null
-                }
-            }
-            else
-            {
-                System.out.println("Invalid move. Your piece cannot reach this destination.");
-                mover.undoNextValues();
-                //target is null, nothing to undo
-            }
-            
-            updateBoard(); //update the game[][] board to be a table pointing to the original positions
-	}
-    }
-
-    public void runGame(Scanner input) throws IOException
-    {
-	boolean gameOver = false; //replace with king checker
-	while (!gameOver)
-	{ 
-            System.out.println("Turn: " + getTurn());
-
-            printBoard();
-            move(input, Color.WHITE);
-            if (isUnableToMove(Color.BLACK))
-            {
-                gameOver = true;
-                printBoard();
-                if (isInCheck(Color.BLACK)) 
-                {
-                    
-                    System.out.println("Checkmate. White team wins.");
-                }
-                else 
-                {
-                    System.out.println("Stalemate.");
-                }
-            }
-
-            if (!gameOver){
-                System.out.println("Turn: " + getTurn());
-                
-                printBoard();
-                move(input, Color.BLACK);
-                if (isUnableToMove(Color.WHITE))
-                {
-                    gameOver = true;
-                    printBoard();
-                    if (isInCheck(Color.WHITE)) 
-                    {
-                        System.out.println("Checkmate. Black team wins.");
-                    }
-                    else
-                    {
-                        System.out.println("Stalemate.");
-                    }
-                }  
-            }
-            incrementTurn();
-	}
-    }
-
-    private boolean isUnableToMove(Color team) {
-        Piece mover;
-        Piece target;
+        //stalemate
+        //repitition
+        //impossibility of checkmate
+        //offer a draw?
         
-        for (int i = 0; i < 24; i++)
+        return false;
+    }
+    
+    public boolean moveFromTo(int startLet, int startNum, int let, int num, Color team, Board prevBoard)
+    {
+        boolean successfullyMoved;
+        successfullyMoved = getPiece(startLet, startNum).moveTo(let, num, this);
+        updateEnemyPawnsEnPassant(team);
+        incrementRepititions(team, prevBoard);
+        updateBoard();
+        return successfullyMoved;
+    }
+    
+    private void updateEnemyPawnsEnPassant(Color team)
+    {
+        for (int i = 0; i < 48; i++)
         {
-            mover = teams[team.getValue()][i];
-            if (mover.isAlive())
+            if(teams[getEnemyTeam(team).getValue()][i].isVulnerableToEnPassant())
             {
-                for (int let = 1; let <= 8; let++)
-                {
-                    for (int num = 1; num <= 8; num++)
-                    {
-                        target = mover.getTargetAndMoveTo(let, num, this);
-                        updateBoard(); //update the game[][] board to be a table pointing to the potential next positions
-
-                        if (target != null) //the piece can reach the destination, barring exposing its own team's King to check
-                        {
-                            if (!isInCheck(team)) //if there is at least one case where a move removes the king from check
-                            {
-                                //reset the board to the original state:
-                                mover.undoNextValues();
-                                target.undoNextValues();
-                                updateBoard();
-                                
-                                return false; //not checkmate
-                            }
-                            target.undoNextValues();
-                        }
-                        //reset the board to the original state before trying the next possible destination:
-                        mover.undoNextValues();
-                        updateBoard();
-                    }
-                }
+                teams[getEnemyTeam(team).getValue()][i].setVulnerableToEnPassantFalse();
             }
         }
-        return true;
     }
+    
+    public void incrementRepititions(Color team, Board prevBoard)
+    {
+        if (team == Color.WHITE && isEqualTo(prevBoard) && turnCounter > 1)
+        {
+            whiteRepetitions++;
+        }
+        else if (team == Color.BLACK && isEqualTo(prevBoard) && turnCounter > 1)
+        {
+            blackRepetitions++;
+        }
+        else
+        {
+            whiteRepetitions = 0;
+            blackRepetitions = 0;
+        }
+    }
+    
+    public boolean threeFoldRepetitions()
+    {
+        if ((whiteRepetitions >= 3 && blackRepetitions >=2)
+                || (blackRepetitions >= 3 && whiteRepetitions >=2))
+        {
+            return true;
+        }
+        return false;
+    }
+    
+    public Piece getPieceOnTeamAt(Color team, int i)
+    {
+        return teams[team.getValue()][i];
+    }
+    
+    public Piece getPawnsPromotion(Pawn pawn, char choiceChar)
+    {
+        //get index of pawn in teams[pawn.getTeam().getValue()][i]
+        int i = Arrays.asList(teams[pawn.getTeam().getValue()]).indexOf(pawn);
+        int num = 0;
+        
+        switch (choiceChar)
+        {
+            case 'Q':
+                num = 8;
+                break;
+            case 'K':
+                num = 16;
+                break;
+            case 'R':
+                num = 24;
+                break;
+            case 'B':
+                num = 32;
+                break;
+        }
+        
+        return teams[pawn.getTeam().getValue()][i+num];
+    }
+    
+    public boolean insufficientMaterialToCheckmate() //TO BE IMPLEMENTED
+    {
+        return false;
+    }
+    
 }

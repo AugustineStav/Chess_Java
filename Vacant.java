@@ -14,20 +14,20 @@ public class Vacant extends Piece {
     public Vacant() {
         super(Color.VACANT, 0, 0, 'x', false);
     }
-
+    
+    public Vacant(Vacant vacant)
+    {
+        super(Color.VACANT, 0, 0, 'x', false);
+    }
+    
     @Override
-    public Piece getTargetAndMoveTo(int let, int num, Board board) {
-        return null;
+    public Vacant copy() {
+        return new Vacant(this);
     }
 
     @Override
-    public void confirmCurrValues() {
-        confirmCurrBaseValues();
-    }
-
-    @Override
-    public void undoNextValues() {
-        undoNextBaseValues();
+    public boolean moveTo(int let, int num, Board board) {
+        return false;
     }
 
     @Override
@@ -35,4 +35,23 @@ public class Vacant extends Piece {
         return false;
     }
     
+    @Override
+    public boolean isEqualTo(Piece otherPiece) 
+    {
+        if (otherPiece instanceof Vacant)
+        {
+            return true;
+        }
+        return false;
+    }
+    
+    @Override
+    public boolean canCastle() {
+        return false;
+    }
+
+    @Override
+    public boolean isVulnerableToEnPassant() {
+        return false;
+    }
 }

@@ -14,12 +14,22 @@ public class Queen extends FarMovingPiece {
     public Queen(Color team, int let, int num, boolean isAlive) {
         super(team, let, num, 'Q', isAlive);
     }
+    
+    public Queen(Queen otherQueen)
+    {
+        super(otherQueen);
+    }
+    
+    @Override
+    public Queen copy() {
+        return new Queen(this);
+    }
 
     @Override
-    public Piece getTargetAndMoveTo(int let, int num, Board board) {
+    public boolean moveTo(int let, int num, Board board) {
         if ((getLet() == let && getNum() == num))
         {
-            return null;
+            return false;
         }
 
         if (
@@ -28,20 +38,10 @@ public class Queen extends FarMovingPiece {
         {
             board.getPiece(let, num).setNextAliveFalse();
             setNextCoordinates(let, num);
-            return board.getPiece(let, num);
+            return true;
         }
 
-        return null;
-    }
-
-    @Override
-    public void confirmCurrValues() {
-        confirmCurrBaseValues();
-    }
-
-    @Override
-    public void undoNextValues() {
-        undoNextBaseValues();
+        return false;
     }
 
     @Override
@@ -54,5 +54,21 @@ public class Queen extends FarMovingPiece {
                 (canMoveDiagonalUpLeft(getLet(), getNum(), let, num, board)) ||
                 (canMoveDiagonalDownRight(getLet(), getNum(), let, num, board)) ||
                 (canMoveDiagonalDownLeft(getLet(), getNum(), let, num, board));
+    }
+    
+    @Override
+    public boolean isEqualTo(Piece otherPiece) 
+    {
+        return (isEqualToBaseValues(otherPiece));
+    }
+    
+    @Override
+    public boolean canCastle() {
+        return false;
+    }
+
+    @Override
+    public boolean isVulnerableToEnPassant() {
+        return false;
     }
 }

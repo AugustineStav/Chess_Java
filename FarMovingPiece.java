@@ -14,6 +14,11 @@ public abstract class FarMovingPiece extends Piece{
     public FarMovingPiece(Color team, int let, int num, char symbol, boolean isAlive) {
         super(team, let, num, symbol, isAlive);
     }
+    
+    public FarMovingPiece(FarMovingPiece otherFarMovingPiece)
+    {
+        super(otherFarMovingPiece);
+    }
 
     public boolean canMoveUp(int testLet, int testNum, int endLet, int endNum, Board board)
     {

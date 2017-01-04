@@ -5,55 +5,65 @@
  */
 package chess;
 
+import java.util.Scanner;
+
 /**
  *
  * @author Gamon
  */
 public class Pawn extends Piece {
-    private int currTurnDoubleJumpedOn;  //set to value that will not match existing turns (so that an unmoved pawn is not vulnerable to en passant)
-    private boolean currFirstMove;
+    private boolean vulnerableToEnPasant;
+    private boolean firstMove;
     
-    private int prevTurnDoubleJumpedOn;
-    private boolean prevFirstMove;
-    
-    private Queen potentialQueen; //points to the queen that the pawn can turn into if it reaches the opposing side of the board
-    
-    Pawn(Color team, int let, int num, boolean isAlive, Queen queen)
+    Pawn(Color team, int let, int num, boolean isAlive)
     {
         super(team, let, num, 'P', isAlive);
-        currFirstMove = true;
-        currTurnDoubleJumpedOn = -1;
-        prevFirstMove = true;
-        prevTurnDoubleJumpedOn = -1;
-        potentialQueen = queen;
+        this.firstMove = true;
+        this.vulnerableToEnPasant = false;
+    }
+    
+    Pawn(Pawn otherPawn)
+    {
+        super(otherPawn);
+        this.firstMove = otherPawn.firstMove;
+        this.vulnerableToEnPasant = otherPawn.vulnerableToEnPasant;
+    }
+    
+    @Override
+    public Piece copy() {
+        return new Pawn(this);
     }
     
     @Override
     //only updates NEXT values and does the myKingInCheck function
     //if it passes the myKingInCheck function, then set CURR values to NEXT values
-    public Piece getTargetAndMoveTo(int let, int num, Board board) {        
+    public boolean moveTo(int let, int num, Board board) {        
         //forward, diagonal one space:
         if (
             canMoveTo(let, num, board)
         )
         {
             //en passant:
-            if (board.getPiece(let, getNum()).isVulnerableToEnPassant(board.getTurn()) &&
+            if (board.getPiece(let, getNum()).isVulnerableToEnPassant() &&
                 isEnemyOf(board.getPiece(let, getNum())))
             {
-                currFirstMove = false;
+                firstMove = false;
                 board.getPiece(let, getNum()).setNextAliveFalse();
                 setNextCoordinates(let, num);
-                return board.getPiece(let, getNum());
+                return true;
             }
             
             //capture enemy at destination:
             if (isEnemyOf(board.getPiece(let, num)))
             {
-                currFirstMove = false;
+                firstMove = false;
                 board.getPiece(let, num).setNextAliveFalse();
                 setNextCoordinates(let, num);
-                return board.getPiece(let, num);
+                
+                //promotion at edge of board:
+                promotion(let, num, board);
+                
+                return true;
             }
         }
         
@@ -65,25 +75,19 @@ public class Pawn extends Piece {
                     (isOnTeam(Color.BLACK) && num == getNum() - 1)
                 )
         )
-        {
-            //promotion to queen at edge of board:
-            if (num == 8 || num == 1)
-            {
-                setNextAliveFalse(); //this pawn is no long active
-                potentialQueen.setNextAliveTrue(); //a queen takes its place
-                potentialQueen.setNextCoordinates(let, num);
-                return potentialQueen;
-            }
-            
-            //move to vacant space in middle of board:
-            currFirstMove = false;
+        {            
+            firstMove = false;
             setNextCoordinates(let, num);
-            return board.getPiece(let, num);
+            
+            //promotion at edge of board:
+            promotion(let, num, board);
+                
+            return true;
         }
         
         //double jump over a vacant space to a vacant space on the first move:
         if (
-                currFirstMove && let == getLet() && board.getPiece(let, num).isVacant() &&
+                firstMove && let == getLet() && board.getPiece(let, num).isVacant() &&
                 (
                     (
                     isOnTeam(Color.WHITE) && num == getNum() + 2 && 
@@ -96,41 +100,65 @@ public class Pawn extends Piece {
                 )
         )
         {
-            currFirstMove = false;
-            currTurnDoubleJumpedOn = board.getTurn();
+            firstMove = false;
+            vulnerableToEnPasant = true;
             setNextCoordinates(let, num);
 
-            return board.getPiece(let, num);
+            return true;
         }
 
-        return null;
+        return false;
     }
     
-    @Override
-    public boolean isVulnerableToEnPassant(int turnCounter)
+    private void promotion(int let, int num, Board board)
     {
-        if (getTeam() == Color.WHITE)
+        if (num == 8 || num == 1)
         {
-                return (turnCounter == currTurnDoubleJumpedOn);
-        }
-        else
-        {
-                return (turnCounter == currTurnDoubleJumpedOn + 1);
+            String choiceString;
+            char choiceChar;
+            boolean choosing = true;
+            setNextAliveFalse(); //this pawn is no long active
+            Scanner input = new Scanner(System.in);
+            System.out.println("Promotion. Enter QUEEN, KNIGHT, ROOK, or BISHOP.");
+
+            while(choosing)
+            {
+                choiceString = input.next();
+                if(choiceString.length() > 0)
+                {
+                    choiceChar = Character.toUpperCase(choiceString.charAt(0));
+                    if (!(choiceChar == 'Q' ||
+                            choiceChar == 'K' ||
+                            choiceChar == 'R' ||
+                            choiceChar == 'B'))
+                    {
+                        System.out.println("Invalid input. Enter QUEEN, KNIGHT, ROOK, or BISHOP.");
+                        continue;
+                    }
+                }
+                else
+                {
+                    System.out.println("Invalid input. Enter QUEEN, KNIGHT, ROOK, or BISHOP.");
+                    continue;
+                }
+                board.getPawnsPromotion(this, choiceChar).setNextAliveTrue();
+                this.setNextAliveFalse();
+                board.getPawnsPromotion(this, choiceChar).setNextCoordinates(let, num);
+                choosing = false;
+            }
         }
     }
     
     @Override
-    public void confirmCurrValues() {
-        confirmCurrBaseValues();
-        prevTurnDoubleJumpedOn = currTurnDoubleJumpedOn;  
-        prevFirstMove = currFirstMove;
+    public boolean isVulnerableToEnPassant()
+    {
+        return vulnerableToEnPasant;
     }
-
+    
     @Override
-    public void undoNextValues() {
-        undoNextBaseValues();
-        currTurnDoubleJumpedOn = prevTurnDoubleJumpedOn;  
-        currFirstMove = prevFirstMove;
+    public void setVulnerableToEnPassantFalse()
+    {
+        vulnerableToEnPasant = false;
     }
 
     @Override
@@ -146,6 +174,24 @@ public class Pawn extends Piece {
                 num == getNum() - 1
                 )
                 );
+    }
+
+    @Override
+    public boolean isEqualTo(Piece otherPiece) 
+    {
+        if (otherPiece instanceof Pawn)
+        {
+            return (this.vulnerableToEnPasant == ((Pawn)otherPiece).vulnerableToEnPasant &&
+                    this.firstMove == ((Pawn)otherPiece).firstMove &&
+                    isEqualToBaseValues(otherPiece));
+        }
+        
+        return false;
+    }
+
+    @Override
+    public boolean canCastle() {
+        return false;
     }
     
 }

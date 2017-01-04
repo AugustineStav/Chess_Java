@@ -16,11 +16,12 @@ public class Chess {
 
     /**
      * @param args the command line arguments
+     * @throws java.io.IOException
      */
     public static void main(String[] args) throws IOException {
-        Board board = new Board();
+        RunGame menu = new RunGame();
         Scanner input = new Scanner(System.in);
-        board.runGame(input);
+        menu.selectPlayer(input);
     }
     
 }

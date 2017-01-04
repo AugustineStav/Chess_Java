@@ -10,44 +10,42 @@ package chess;
  * @author Gamon
  */
 public class Rook extends FarMovingPiece {
-    private boolean currFirstMove;
-    private boolean prevFirstMove;
+    private boolean firstMove;
     
     public Rook(Color team, int let, int num, boolean isAlive) {
         super(team, let, num, 'R', isAlive);
-        currFirstMove = true;
-        prevFirstMove = true;
+        firstMove = true;
+    }
+    
+    public Rook(Rook otherRook)
+    {
+        super(otherRook);
+        this.firstMove = otherRook.firstMove;
+    }
+    
+    @Override
+    public Rook copy() {
+        return new Rook(this);
     }
 
     @Override
-    public Piece getTargetAndMoveTo(int let, int num, Board board) {
+    public boolean moveTo(int let, int num, Board board) {
         if ((getLet() == let && getNum() == num))
         {
-            return null;
+            return false;
         }
 
         if (
             canMoveTo(let, num, board)
             )
         {
+            firstMove = false;
             board.getPiece(let, num).setNextAliveFalse();
             setNextCoordinates(let, num);
-            return board.getPiece(let, num);
+            return true;
         }
 
-        return null;
-    }
-    
-    @Override
-    public void confirmCurrValues() {
-        confirmCurrBaseValues();
-        prevFirstMove = currFirstMove;
-    }
-
-    @Override
-    public void undoNextValues() {
-        undoNextBaseValues();
-        currFirstMove = prevFirstMove;
+        return false;
     }
 
     @Override
@@ -56,6 +54,27 @@ public class Rook extends FarMovingPiece {
                 (canMoveDown(getLet(), getNum(), let, num, board)) ||
                 (canMoveLeft(getLet(), getNum(), let, num, board)) ||
                 (canMoveRight(getLet(), getNum(), let, num, board));
+    }
+    
+    @Override
+    public boolean isEqualTo(Piece otherPiece) {
+        if (otherPiece instanceof Rook)
+        {
+            return (this.firstMove == ((Rook)otherPiece).firstMove &&
+                    isEqualToBaseValues(otherPiece));
+        }
+        
+        return false;
+    }
+
+    @Override
+    public boolean canCastle() {
+        return firstMove;
+    }
+
+    @Override
+    public boolean isVulnerableToEnPassant() {
+        return false;
     }
     
 }

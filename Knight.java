@@ -16,28 +16,28 @@ public class Knight extends Piece {
     public Knight(Color team, int let, int num, boolean isAlive) {
         super(team, let, num, 'H', isAlive);
     }
+    
+    public Knight(Knight otherKnight)
+    {
+        super(otherKnight);
+    }
+    
+    @Override
+    public Knight copy() {
+        return new Knight(this);
+    }
 
     @Override
-    public Piece getTargetAndMoveTo(int let, int num, Board board) {
+    public boolean moveTo(int let, int num, Board board) {
         if (
             canMoveTo(let, num, board)
         )
         {
             board.getPiece(let, num).setNextAliveFalse();
             setNextCoordinates(let, num);
-            return board.getPiece(let, num);
+            return true;
         }
-        return null;
-    }
-
-    @Override
-    public void confirmCurrValues() {
-        confirmCurrBaseValues();
-    }
-
-    @Override
-    public void undoNextValues() {
-        undoNextBaseValues();
+        return false;
     }
 
     @Override
@@ -47,4 +47,19 @@ public class Knight extends Piece {
                 isNotOnTeamOf(board.getPiece(let, num));
     }
     
+    @Override
+    public boolean isEqualTo(Piece otherPiece) 
+    {
+        return (isEqualToBaseValues(otherPiece));
+    }
+    
+    @Override
+    public boolean canCastle() {
+        return false;
+    }
+
+    @Override
+    public boolean isVulnerableToEnPassant() {
+        return false;
+    }
 }

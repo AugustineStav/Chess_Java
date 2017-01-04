@@ -10,41 +10,54 @@ package chess;
  * @author Gamon
  */
 public abstract class Piece {
-    int currLet;
-    int currNum;
-    boolean currAlive;
+    int let;
+    int num;
+    boolean alive;
     
-    int prevLet;
-    int prevNum;
-    boolean prevAlive;
-    
-    private Color team;
-    private char symbol;
+    private final Color team;
+    private final char symbol;
     
     
-    Piece(Color team, int let, int num, char symbol, boolean isAlive)
+    Piece(Color team, int let, int num, char symbol, boolean alive)
     {
-        
         //initialize the current values:
-        currLet = let;
-        currNum = num;
-        currAlive= isAlive;
-        
-        //initialize the next possible values:
-        prevLet = let;
-        prevNum = num;
-        prevAlive= isAlive;
+        this.let = let;
+        this.num = num;
+        this.alive = alive;
         
         this.team = team;
-        this.symbol = symbol;
-        
+        this.symbol = symbol; 
     }
+    
+    // copy constructor
+    Piece (Piece otherPiece)
+    {
+        this.let = otherPiece.let;
+        this.num = otherPiece.num;
+        this.alive = otherPiece.alive;
+        
+        this.team = otherPiece.team;
+        this.symbol = otherPiece.symbol; 
+    }
+    
     //return piece that the moving piece affected (vacant spot at destination, 
     //captured piece-including en passant, or rook during castling):
-    public abstract Piece getTargetAndMoveTo(int let, int num, Board board); 
+    public abstract boolean moveTo(int let, int num, Board board); 
     public abstract boolean canMoveTo(int let, int num, Board board);
-    public abstract void confirmCurrValues(); //confirm move
-    public abstract void undoNextValues(); //undo move
+    public abstract Piece copy();
+    public abstract boolean isVulnerableToEnPassant();
+    public abstract boolean canCastle();
+    
+    public abstract boolean isEqualTo(Piece otherPiece);
+    
+    public boolean isEqualToBaseValues(Piece otherPiece)
+    {
+        return (this.let == otherPiece.let &&
+                this.num == otherPiece.num &&
+                this.alive == otherPiece.alive &&
+                this.team == otherPiece.team &&
+                this.symbol == otherPiece.symbol);
+    }
     
     public boolean canSeeEnemyKing(Board board) {
         int let = board.getEnemyKing(this).getLet();
@@ -53,20 +66,6 @@ public abstract class Piece {
         return (
             canMoveTo(let, num, board)
         );
-    }
-    
-    public void undoNextBaseValues()
-    {
-        currLet = prevLet;
-        currNum = prevNum;
-        currAlive = prevAlive;
-    }
-    
-    public void confirmCurrBaseValues()
-    {
-        prevLet = currLet;
-        prevNum = currNum;
-        prevAlive = currAlive;
     }
     
     public void display()
@@ -88,17 +87,17 @@ public abstract class Piece {
     
     public boolean isAlive()
     {
-        return currAlive;
+        return alive;
     }
     
     public int getLet()
     {
-        return currLet;
+        return let;
     }
     
     public int getNum()
     {
-        return currNum;
+        return num;
     }
     
     public Color getTeam()
@@ -111,9 +110,9 @@ public abstract class Piece {
         return this.team == team;
     }
     
-    public boolean isVulnerableToEnPassant(int turnCounter)
+    public void setVulnerableToEnPassantFalse()
     {
-        return false;
+        //intentionally blank
     }
     
     public boolean isVacant()
@@ -129,18 +128,18 @@ public abstract class Piece {
     
     public void setNextAliveFalse()
     {
-        this.currAlive = false;
+        this.alive = false;
     }
     
     public void setNextAliveTrue()
     {
-        this.currAlive = true;
+        this.alive = true;
     }
     
     public void setNextCoordinates(int let, int num)
     {
-        this.currLet = let;
-        this.currNum = num;
+        this.let = let;
+        this.num = num;
     }
     
     public boolean isNotOnTeamOf(Piece piece)
