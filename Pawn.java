@@ -13,59 +13,51 @@ public class Pawn extends Piece {
     private int currTurnDoubleJumpedOn;  //set to value that will not match existing turns (so that an unmoved pawn is not vulnerable to en passant)
     private boolean currFirstMove;
     
-    private int nextTurnDoubleJumpedOn;
-    private boolean nextFirstMove;
+    private int prevTurnDoubleJumpedOn;
+    private boolean prevFirstMove;
     
-    Pawn(Color team, int let, int num)
+    private Queen potentialQueen; //points to the queen that the pawn can turn into if it reaches the opposing side of the board
+    
+    Pawn(Color team, int let, int num, boolean isAlive, Queen queen)
     {
-        super(team, let, num, 'P', true);
+        super(team, let, num, 'P', isAlive);
         currFirstMove = true;
         currTurnDoubleJumpedOn = -1;
-        nextFirstMove = true;
-        nextTurnDoubleJumpedOn = -1;
+        prevFirstMove = true;
+        prevTurnDoubleJumpedOn = -1;
+        potentialQueen = queen;
     }
     
     @Override
     //only updates NEXT values and does the myKingInCheck function
     //if it passes the myKingInCheck function, then set CURR values to NEXT values
-    public Piece canMoveTo(int let, int num, Board board) {        
+    public Piece getTargetAndMoveTo(int let, int num, Board board) {        
+        //forward, diagonal one space:
         if (
-            (let == getLet()+1 || let == getLet() - 1) &&
-            (
-                (
-                    isOnTeam(Color.WHITE) &&
-                    num == getNum() + 1
-                ) ||
-                (
-                    isOnTeam(Color.BLACK) &&
-                    num == getNum() - 1
-                )
-            )
+            canMoveTo(let, num, board)
         )
         {
             //en passant:
-            if (board.getPiece(let, num).isVulnerableToEnPassant(board.getTurn()) &&
+            if (board.getPiece(let, getNum()).isVulnerableToEnPassant(board.getTurn()) &&
                 isEnemyOf(board.getPiece(let, getNum())))
             {
-                nextFirstMove = false;
+                currFirstMove = false;
                 board.getPiece(let, getNum()).setNextAliveFalse();
                 setNextCoordinates(let, num);
-                
                 return board.getPiece(let, getNum());
             }
             
             //capture enemy at destination:
             if (isEnemyOf(board.getPiece(let, num)))
             {
-                nextFirstMove = false;
+                currFirstMove = false;
                 board.getPiece(let, num).setNextAliveFalse();
                 setNextCoordinates(let, num);
-                
                 return board.getPiece(let, num);
             }
         }
         
-        //move one forward to empty space:
+        //move one forward to vacant space:
         if (
                 let == getLet() && board.getPiece(let, num).isVacant() &&
                 (
@@ -74,9 +66,18 @@ public class Pawn extends Piece {
                 )
         )
         {
-            nextFirstMove = false;
+            //promotion to queen at edge of board:
+            if (num == 8 || num == 1)
+            {
+                setNextAliveFalse(); //this pawn is no long active
+                potentialQueen.setNextAliveTrue(); //a queen takes its place
+                potentialQueen.setNextCoordinates(let, num);
+                return potentialQueen;
+            }
+            
+            //move to vacant space in middle of board:
+            currFirstMove = false;
             setNextCoordinates(let, num);
-
             return board.getPiece(let, num);
         }
         
@@ -95,8 +96,8 @@ public class Pawn extends Piece {
                 )
         )
         {
-            nextFirstMove = false;
-            nextTurnDoubleJumpedOn = board.getTurn();
+            currFirstMove = false;
+            currTurnDoubleJumpedOn = board.getTurn();
             setNextCoordinates(let, num);
 
             return board.getPiece(let, num);
@@ -117,19 +118,34 @@ public class Pawn extends Piece {
                 return (turnCounter == currTurnDoubleJumpedOn + 1);
         }
     }
-
+    
     @Override
     public void confirmCurrValues() {
         confirmCurrBaseValues();
-        currTurnDoubleJumpedOn = nextTurnDoubleJumpedOn;  
-        currFirstMove = nextFirstMove;
+        prevTurnDoubleJumpedOn = currTurnDoubleJumpedOn;  
+        prevFirstMove = currFirstMove;
     }
 
     @Override
     public void undoNextValues() {
         undoNextBaseValues();
-        nextTurnDoubleJumpedOn = currTurnDoubleJumpedOn;  
-        nextFirstMove = currFirstMove;
+        currTurnDoubleJumpedOn = prevTurnDoubleJumpedOn;  
+        currFirstMove = prevFirstMove;
+    }
+
+    @Override
+    public boolean canMoveTo(int let, int num, Board board) {
+        return (let == getLet()+1 || let == getLet() - 1) &&
+                (
+                (
+                isOnTeam(Color.WHITE) &&
+                num == getNum() + 1
+                ) ||
+                (
+                isOnTeam(Color.BLACK) &&
+                num == getNum() - 1
+                )
+                );
     }
     
 }

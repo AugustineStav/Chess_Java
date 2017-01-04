@@ -16,7 +16,7 @@ public class Vacant extends Piece {
     }
 
     @Override
-    public Piece canMoveTo(int let, int num, Board board) {
+    public Piece getTargetAndMoveTo(int let, int num, Board board) {
         return null;
     }
 
@@ -28,6 +28,11 @@ public class Vacant extends Piece {
     @Override
     public void undoNextValues() {
         undoNextBaseValues();
+    }
+
+    @Override
+    public boolean canMoveTo(int let, int num, Board board) {
+        return false;
     }
     
 }

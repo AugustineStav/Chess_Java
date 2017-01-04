@@ -10,9 +10,13 @@ package chess;
  * @author Gamon
  */
 public abstract class Piece {
-    private int[] currNextLet;
-    private int[] currNextNum;
-    private boolean[] currNextAlive; //is the piece still on the board?
+    int currLet;
+    int currNum;
+    boolean currAlive;
+    
+    int prevLet;
+    int prevNum;
+    boolean prevAlive;
     
     private Color team;
     private char symbol;
@@ -20,19 +24,16 @@ public abstract class Piece {
     
     Piece(Color team, int let, int num, char symbol, boolean isAlive)
     {
-        currNextLet = new int[2];
-        currNextNum = new int[2];
-        currNextAlive = new boolean[2];
         
         //initialize the current values:
-        currNextLet[0] = let;
-        currNextNum[0] = num;
-        currNextAlive[0]= isAlive;
+        currLet = let;
+        currNum = num;
+        currAlive= isAlive;
         
         //initialize the next possible values:
-        currNextLet[1] = let;
-        currNextNum[1] = num;
-        currNextAlive[1]= isAlive;
+        prevLet = let;
+        prevNum = num;
+        prevAlive= isAlive;
         
         this.team = team;
         this.symbol = symbol;
@@ -40,22 +41,32 @@ public abstract class Piece {
     }
     //return piece that the moving piece affected (vacant spot at destination, 
     //captured piece-including en passant, or rook during castling):
-    public abstract Piece canMoveTo(int let, int num, Board board); 
+    public abstract Piece getTargetAndMoveTo(int let, int num, Board board); 
+    public abstract boolean canMoveTo(int let, int num, Board board);
     public abstract void confirmCurrValues(); //confirm move
     public abstract void undoNextValues(); //undo move
     
-    public void confirmCurrBaseValues()
-    {
-        currNextLet[0] = currNextLet[1];
-        currNextNum[0] = currNextNum[1];
-        currNextAlive[0] = currNextAlive[1];
+    public boolean canSeeEnemyKing(Board board) {
+        int let = board.getEnemyKing(this).getLet();
+        int num = board.getEnemyKing(this).getNum();
+        
+        return (
+            canMoveTo(let, num, board)
+        );
     }
     
     public void undoNextBaseValues()
     {
-        currNextLet[1] = currNextLet[0];
-        currNextNum[1] = currNextNum[0];
-        currNextAlive[1] = currNextAlive[0];
+        currLet = prevLet;
+        currNum = prevNum;
+        currAlive = prevAlive;
+    }
+    
+    public void confirmCurrBaseValues()
+    {
+        prevLet = currLet;
+        prevNum = currNum;
+        prevAlive = currAlive;
     }
     
     public void display()
@@ -118,13 +129,18 @@ public abstract class Piece {
     
     public void setNextAliveFalse()
     {
-        this.nextAlive = false;
+        this.currAlive = false;
+    }
+    
+    public void setNextAliveTrue()
+    {
+        this.currAlive = true;
     }
     
     public void setNextCoordinates(int let, int num)
     {
-        this.nextLet = let;
-        this.nextNum = num;
+        this.currLet = let;
+        this.currNum = num;
     }
     
     public boolean isNotOnTeamOf(Piece piece)

@@ -11,44 +11,51 @@ package chess;
  */
 public class Rook extends FarMovingPiece {
     private boolean currFirstMove;
-    private boolean nextFirstMove;
+    private boolean prevFirstMove;
     
-    public Rook(Color team, int let, int num) {
-        super(team, let, num, 'R', true);
+    public Rook(Color team, int let, int num, boolean isAlive) {
+        super(team, let, num, 'R', isAlive);
         currFirstMove = true;
-        nextFirstMove = true;
+        prevFirstMove = true;
     }
 
     @Override
-    public Piece canMoveTo(int let, int num, Board board) {
+    public Piece getTargetAndMoveTo(int let, int num, Board board) {
         if ((getLet() == let && getNum() == num))
         {
             return null;
         }
 
         if (
-            (canMoveUp(getLet(), getNum(), let, num, board)) ||
-            (canMoveDown(getLet(), getNum(), let, num, board)) ||
-            (canMoveLeft(getLet(), getNum(), let, num, board)) ||
-            (canMoveRight(getLet(), getNum(), let, num, board))
+            canMoveTo(let, num, board)
             )
         {
+            board.getPiece(let, num).setNextAliveFalse();
+            setNextCoordinates(let, num);
             return board.getPiece(let, num);
         }
 
         return null;
     }
-
+    
     @Override
     public void confirmCurrValues() {
         confirmCurrBaseValues();
-        currFirstMove = nextFirstMove;
+        prevFirstMove = currFirstMove;
     }
 
     @Override
     public void undoNextValues() {
         undoNextBaseValues();
-        nextFirstMove = currFirstMove;
+        currFirstMove = prevFirstMove;
+    }
+
+    @Override
+    public boolean canMoveTo(int let, int num, Board board) {
+        return (canMoveUp(getLet(), getNum(), let, num, board)) ||
+                (canMoveDown(getLet(), getNum(), let, num, board)) ||
+                (canMoveLeft(getLet(), getNum(), let, num, board)) ||
+                (canMoveRight(getLet(), getNum(), let, num, board));
     }
     
 }

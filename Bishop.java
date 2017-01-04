@@ -11,24 +11,23 @@ package chess;
  */
 public class Bishop extends FarMovingPiece {
     
-    public Bishop(Color team, int let, int num) {
-        super(team, let, num, 'B', true);
+    public Bishop(Color team, int let, int num, boolean isAlive) {
+        super(team, let, num, 'B', isAlive);
     }
 
     @Override
-    public Piece canMoveTo(int let, int num, Board board) {
+    public Piece getTargetAndMoveTo(int let, int num, Board board) {
         if ((getLet() == let && getNum() == num))
         {
             return null;
         }
 
         if (
-            (canMoveDiagonalUpRight(getLet(), getNum(), let, num, board)) ||
-            (canMoveDiagonalUpLeft(getLet(), getNum(), let, num, board)) ||
-            (canMoveDiagonalDownRight(getLet(), getNum(), let, num, board)) ||
-            (canMoveDiagonalDownLeft(getLet(), getNum(), let, num, board))
+            canMoveTo(let, num, board)
             )
         {
+            board.getPiece(let, num).setNextAliveFalse();
+            setNextCoordinates(let, num);
             return board.getPiece(let, num);
         }
 
@@ -43,5 +42,13 @@ public class Bishop extends FarMovingPiece {
     @Override
     public void undoNextValues() {
         undoNextBaseValues();
+    }
+
+    @Override
+    public boolean canMoveTo(int let, int num, Board board) {
+        return (canMoveDiagonalUpRight(getLet(), getNum(), let, num, board)) ||
+                (canMoveDiagonalUpLeft(getLet(), getNum(), let, num, board)) ||
+                (canMoveDiagonalDownRight(getLet(), getNum(), let, num, board)) ||
+                (canMoveDiagonalDownLeft(getLet(), getNum(), let, num, board));
     }
 }

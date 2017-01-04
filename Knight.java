@@ -13,20 +13,18 @@ import static java.lang.Math.abs;
  */
 public class Knight extends Piece {
 
-    public Knight(Color team, int let, int num) {
-        super(team, let, num, 'H', true);
+    public Knight(Color team, int let, int num, boolean isAlive) {
+        super(team, let, num, 'H', isAlive);
     }
 
     @Override
-    public Piece canMoveTo(int let, int num, Board board) {
+    public Piece getTargetAndMoveTo(int let, int num, Board board) {
         if (
-            (
-            (abs(let - getLet()) == 2 && abs(num - getNum()) == 1) ||
-            (abs(let - getLet()) == 1 && abs(num - getNum()) == 2)
-            ) &&
-            isNotOnTeamOf(board.getPiece(let, num))
+            canMoveTo(let, num, board)
         )
         {
+            board.getPiece(let, num).setNextAliveFalse();
+            setNextCoordinates(let, num);
             return board.getPiece(let, num);
         }
         return null;
@@ -40,6 +38,13 @@ public class Knight extends Piece {
     @Override
     public void undoNextValues() {
         undoNextBaseValues();
+    }
+
+    @Override
+    public boolean canMoveTo(int let, int num, Board board) {
+        return ((abs(let - getLet()) == 2 && abs(num - getNum()) == 1) ||
+                (abs(let - getLet()) == 1 && abs(num - getNum()) == 2)) &&
+                isNotOnTeamOf(board.getPiece(let, num));
     }
     
 }

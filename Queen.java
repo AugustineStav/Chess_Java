@@ -11,28 +11,23 @@ package chess;
  */
 public class Queen extends FarMovingPiece {
     
-    public Queen(Color team, int let, int num) {
-        super(team, let, num, 'Q', true);
+    public Queen(Color team, int let, int num, boolean isAlive) {
+        super(team, let, num, 'Q', isAlive);
     }
 
     @Override
-    public Piece canMoveTo(int let, int num, Board board) {
+    public Piece getTargetAndMoveTo(int let, int num, Board board) {
         if ((getLet() == let && getNum() == num))
         {
             return null;
         }
 
         if (
-            (canMoveUp(getLet(), getNum(), let, num, board)) ||
-            (canMoveDown(getLet(), getNum(), let, num, board)) ||
-            (canMoveLeft(getLet(), getNum(), let, num, board)) ||
-            (canMoveRight(getLet(), getNum(), let, num, board)) ||
-            (canMoveDiagonalUpRight(getLet(), getNum(), let, num, board)) ||
-            (canMoveDiagonalUpLeft(getLet(), getNum(), let, num, board)) ||
-            (canMoveDiagonalDownRight(getLet(), getNum(), let, num, board)) ||
-            (canMoveDiagonalDownLeft(getLet(), getNum(), let, num, board))
+            canMoveTo(let, num, board)
             )
         {
+            board.getPiece(let, num).setNextAliveFalse();
+            setNextCoordinates(let, num);
             return board.getPiece(let, num);
         }
 
@@ -47,5 +42,17 @@ public class Queen extends FarMovingPiece {
     @Override
     public void undoNextValues() {
         undoNextBaseValues();
+    }
+
+    @Override
+    public boolean canMoveTo(int let, int num, Board board) {
+        return (canMoveUp(getLet(), getNum(), let, num, board)) ||
+                (canMoveDown(getLet(), getNum(), let, num, board)) ||
+                (canMoveLeft(getLet(), getNum(), let, num, board)) ||
+                (canMoveRight(getLet(), getNum(), let, num, board)) ||
+                (canMoveDiagonalUpRight(getLet(), getNum(), let, num, board)) ||
+                (canMoveDiagonalUpLeft(getLet(), getNum(), let, num, board)) ||
+                (canMoveDiagonalDownRight(getLet(), getNum(), let, num, board)) ||
+                (canMoveDiagonalDownLeft(getLet(), getNum(), let, num, board));
     }
 }

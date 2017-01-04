@@ -13,9 +13,8 @@ public enum Color {
     BLACK(0), WHITE(1), VACANT(3);
     
     private final int value;
-
-    Color(final int newValue) {
-        value = newValue;
+    Color(final int value) {
+        this.value = value;
     }
 
     public int getValue() { return value; }
